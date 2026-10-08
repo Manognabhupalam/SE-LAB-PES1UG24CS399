@@ -23,8 +23,8 @@ def dirt_color(row):
 
 
 def on_enemy_popped(enemy, score):
-    """Called when an enemy is popped; add particles, bonus points, or a colour flash here."""
-    pass
+    """Called when an enemy is popped; create a simple pop effect."""
+    print(f"Enemy popped at {enemy.cell}! Score: {score}")
 
 
 def enemy_speed_multiplier(level):
