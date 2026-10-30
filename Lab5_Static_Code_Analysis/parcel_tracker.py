@@ -1,8 +1,10 @@
 ﻿
 """A simple parcel tracking application."""
 
-import random
-import subprocess
+import ipaddress
+import secrets
+import shutil
+import subprocess  # nosec B404
 import tempfile
 from datetime import date
 
@@ -67,13 +69,26 @@ def is_with_courier(tracking_id):
 
 
 def label_path():
-    """Return a temporary file path."""
-    return tempfile.mktemp(suffix=".txt")
+    """Create a secure temporary file and return its path."""
+    with tempfile.NamedTemporaryFile(
+        suffix=".txt", delete=False
+    ) as temp_file:
+        return temp_file.name
 
 
 def ping_hub(hub_address):
-    """Ping the specified parcel hub."""
-    return subprocess.check_output("ping -c 1 " + hub_address, shell=True)
+    """Safely ping a validated hub IP address."""
+    validated_address = str(ipaddress.ip_address(hub_address))
+    ping_executable = shutil.which("ping")
+
+    if ping_executable is None:
+        raise FileNotFoundError("Ping executable not found.")
+
+    return subprocess.check_output(
+        [ping_executable, "-n", "1", validated_address],
+        shell=False,
+        text=True,
+    )  # nosec B603
 
 
 def main():
@@ -95,7 +110,7 @@ def main():
         print("  cost:", shipping_cost(parcels[tracking_id]["weight"]))
 
     print(track_parcel("TRK00000"))
-    delivery_otp = random.randint(1000, 9999)
+    delivery_otp = secrets.randbelow(9000) + 1000
     print("Delivery OTP for", third, "is", delivery_otp)
     print("Parcels booked today:", len(parcels))
 
